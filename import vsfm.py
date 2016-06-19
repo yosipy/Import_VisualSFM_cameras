@@ -48,18 +48,6 @@ from mathutils import Matrix, Vector, Quaternion
 
 def voodoo_import(filepath,ld_cam,directory):
 
-    #print(filepath)
-    print("Importing camera data")
-    # Setup new camera specifically for VSFM data
-    bpy.ops.object.camera_add(view_align=False,
-                              enter_editmode=False,
-                              layers=(True, False, False, False, False, False, False, False, False, False,
-                                      False, False, False, False, False, False, False, False, False, False))
-    bpy.context.active_object.name = "VSFM Camera"
-    bpy.context.active_object.data.name = "VSFM Camera"
-    VSFMObj = bpy.data.objects["VSFM Camera"]
-    VSFMCam = bpy.data.cameras["VSFM Camera"]
-    #VSFMObj.rotation_mode = 'QUATERNION'
 
     cameraDataLines = open(filepath,'r').readlines()
     directory = os.path.dirname(filepath)
@@ -86,6 +74,7 @@ def voodoo_import(filepath,ld_cam,directory):
     corresponding_frame = 1
     xrot = Matrix.Rotation(radians(90.0), 4, 'X')
     yrot = Matrix.Rotation(radians(180), 4, 'Y')
+    
     # Compensating for clip orientation which will start as the world Z axis Up
 
 # cameras_v2.txt file format (per camera)
@@ -105,7 +94,7 @@ def voodoo_import(filepath,ld_cam,directory):
 # 12 3-vec Lat/Lng/Alt from EXIF
 
 
-    for filename in imagelist:
+    for id, filename in enumerate(imagelist):
         # Find the line in cameras_v2.txt that correlates with the file name
         cameraStartLine = cameraDataLines.index(filename + '\n')
         
@@ -133,17 +122,21 @@ def voodoo_import(filepath,ld_cam,directory):
         
         theMatrix = getWorld(translate, rotation)
         
-        FOV = 2 * atan(height/(2*focal_length))
+        FOV = 2 * atan(max(width,height)/2.0/focal_length)
+
+        bpy.ops.object.camera_add(view_align=False,
+                                  enter_editmode=False,
+                                  layers=(True, False, False, False, False, False, False, False, False, False,
+                                          False, False, False, False, False, False, False, False, False, False))
+        bpy.context.active_object.name = "VSFM Camera{}".format(id)
+        bpy.context.active_object.data.name = "VSFM Camera{}".format(id)
+        VSFMObj = bpy.data.objects["VSFM Camera{}".format(id)]
+        VSFMCam = bpy.data.cameras["VSFM Camera{}".format(id)]
         VSFMCam.angle = FOV
-        #temp = (cameraDataLines[cameraStartLine + 7].strip())
-        #quatRot = list(map(float, temp.split()))
-        #fov = 2 * atan[ image_height / (2*focal_pix) ]  
-        VSFMObj.matrix_world = xrot * yrot * theMatrix 
+        
+        VSFMObj.matrix_world = theMatrix 
         
         
-        VSFMObj.keyframe_insert(data_path='location', frame=corresponding_frame)
-        VSFMObj.keyframe_insert(data_path='rotation_euler', frame=corresponding_frame)
-        VSFMCam.keyframe_insert(data_path='lens', frame=corresponding_frame)
         corresponding_frame += 1
     return {'FINISHED'}
 
