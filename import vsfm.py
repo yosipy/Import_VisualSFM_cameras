@@ -18,8 +18,8 @@
 
 bl_info = {
     "name": "Import VSFM camera",
-    "author": "Brad Stansell",
-    "version": (0, 8),
+    "author": "author(fork):yosi (author:Brad Stansell)",
+    "version": (0, 4),
     "blender": (2, 63, 0),
     "location": "File > Import > VSFM camera",
     "description": "Imports a camera_v2.txt file from VSFM",
@@ -48,27 +48,13 @@ from mathutils import Matrix, Vector, Quaternion
 
 def voodoo_import(filepath,ld_cam,directory):
 
-    #print(filepath)
-    print("Importing camera data")
-    # Setup new camera specifically for VSFM data
-    bpy.ops.object.camera_add(view_align=False,
-                              enter_editmode=False,
-                              layers=(True, False, False, False, False, False, False, False, False, False,
-                                      False, False, False, False, False, False, False, False, False, False))
-    bpy.context.active_object.name = "VSFM Camera"
-    bpy.context.active_object.data.name = "VSFM Camera"
-    VSFMObj = bpy.data.objects["VSFM Camera"]
-    VSFMCam = bpy.data.cameras["VSFM Camera"]
-    #VSFMObj.rotation_mode = 'QUATERNION'
 
     cameraDataLines = open(filepath,'r').readlines()
     directory = os.path.dirname(filepath)
     imagesDir = os.path.join(directory, 'visualize')
     imagelist = os.listdir(imagesDir)
 
-    imageClip = bpy.ops.clip.open(directory=imagesDir,
-                      files=[{"name":"00000000.jpg", "name":"00000000.jpg"}],
-                      relative_path=True)
+
     
     #calculate and apply scale keyframe based on size of first image
     # As far as I can tell, if different images are different aspect ratios,
@@ -86,6 +72,7 @@ def voodoo_import(filepath,ld_cam,directory):
     corresponding_frame = 1
     xrot = Matrix.Rotation(radians(90.0), 4, 'X')
     yrot = Matrix.Rotation(radians(180), 4, 'Y')
+    
     # Compensating for clip orientation which will start as the world Z axis Up
 
 # cameras_v2.txt file format (per camera)
@@ -105,9 +92,14 @@ def voodoo_import(filepath,ld_cam,directory):
 # 12 3-vec Lat/Lng/Alt from EXIF
 
 
-    for filename in imagelist:
+    for id, filename in enumerate(imagelist):
         # Find the line in cameras_v2.txt that correlates with the file name
         cameraStartLine = cameraDataLines.index(filename + '\n')
+		
+        # Get image name
+        temp = (cameraDataLines[cameraStartLine + 1].strip())
+        image_name = os.path.basename(temp)
+        image_name = os.path.splitext(image_name)[0]
         
         temp = (cameraDataLines[cameraStartLine + 2].strip())
         focal_length = float(temp)
@@ -133,17 +125,21 @@ def voodoo_import(filepath,ld_cam,directory):
         
         theMatrix = getWorld(translate, rotation)
         
-        FOV = 2 * atan(height/(2*focal_length))
+        FOV = 2 * atan(max(width,height)/2.0/focal_length)
+
+        bpy.ops.object.camera_add(view_align=False,
+                                  enter_editmode=False,
+                                  layers=(True, False, False, False, False, False, False, False, False, False,
+                                          False, False, False, False, False, False, False, False, False, False))
+        bpy.context.active_object.name = image_name
+        bpy.context.active_object.data.name = image_name
+        VSFMObj = bpy.data.objects[image_name]
+        VSFMCam = bpy.data.cameras[image_name]
         VSFMCam.angle = FOV
-        #temp = (cameraDataLines[cameraStartLine + 7].strip())
-        #quatRot = list(map(float, temp.split()))
-        #fov = 2 * atan[ image_height / (2*focal_pix) ]  
-        VSFMObj.matrix_world = xrot * yrot * theMatrix 
+        
+        VSFMObj.matrix_world = theMatrix 
         
         
-        VSFMObj.keyframe_insert(data_path='location', frame=corresponding_frame)
-        VSFMObj.keyframe_insert(data_path='rotation_euler', frame=corresponding_frame)
-        VSFMCam.keyframe_insert(data_path='lens', frame=corresponding_frame)
         corresponding_frame += 1
     return {'FINISHED'}
 
@@ -210,5 +206,4 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-
 
