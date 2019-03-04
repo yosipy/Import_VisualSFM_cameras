@@ -1,6 +1,8 @@
 Import_VisualSFM_cameras (Previous name:"VSFMBundle_to_Blender")
 =====================
 
+/*change point : I changed the name of the imported camera to the image name given to Visualsfm. */
+
 An attempt to create a script based on Konrad Koelzer's bundle import script that optimizes VSFM output for Blender
 
 The original script expected a very specific directory structure and file names, 
