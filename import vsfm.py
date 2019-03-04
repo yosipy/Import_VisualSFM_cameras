@@ -18,7 +18,7 @@
 
 bl_info = {
     "name": "Import VSFM camera",
-    "author": "author(fork):yosi (author:Brad Stansell)",
+    "author": "fork author:yosi (before fork author:Brad Stansell)",
     "version": (0, 4),
     "blender": (2, 63, 0),
     "location": "File > Import > VSFM camera",
