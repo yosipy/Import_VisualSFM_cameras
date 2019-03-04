@@ -1,4 +1,4 @@
-VSFMBundle_to_Blender
+Import_VisualSFM_cameras (Previous name:"VSFMBundle_to_Blender")
 =====================
 
 An attempt to create a script based on Konrad Koelzer's bundle import script that optimizes VSFM output for Blender
