@@ -1,4 +1,5 @@
 Import_VisualSFM_cameras (Previous name:"VSFMBundle_to_Blender")
+BlenderAPIを使用しています。
 =====================
 
 /*change point : I changed the name of the imported camera to the image name given to Visualsfm. */
